@@ -1014,29 +1014,98 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>14 - Splay Trees</title></head><body><article class="markdown-body"><h1 id="splay-trees"><a name="user-content-splay-trees" href="#splay-trees" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Splay Trees</h1>
-<p>A variant of a BSTree with rotations to restructure. It doesn&rsquo;t contain any additional info in the tree, like height (AVL Trees) or colors (Red-Black Trees).</p>
-<p>Inspired by &ldquo;move to front&rdquo; (MTF) hueristic for linked lists:</p>
-<pre><code>lookup target in
-(head -&gt; node -&gt; node -&gt; node -&gt; node (target) -&gt; ...)
-maps to
-(head -&gt; node (target) -&gt; node -&gt; node -&gt; node -&gt; ...)
+</style><title>17 - Shortest Paths</title></head><body><article class="markdown-body"><h1 id="shortest-paths"><a name="user-content-shortest-paths" href="#shortest-paths" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Shortest Paths</h1>
+<h2 id="single-source-shortest-path-problem-with-positive-weights-sssp"><a name="user-content-single-source-shortest-path-problem-with-positive-weights-sssp" href="#single-source-shortest-path-problem-with-positive-weights-sssp" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Single Source Shortest Path Problem with Positive Weights (SSSP+)</h2>
+<p>(Dijkstra&rsquo;s Algorithm : Textbook 24.3)</p>
+<p><strong>Given:</strong></p>
+<pre><code>G = (V, E), s in V, w : E -&gt; Z+
 </code></pre>
-<p>This heuristic is good in some &ldquo;online&rdquo;, &ldquo;competative&rdquo; sense. Also, it doesn&rsquo;t make the operations on the list any worse than without MTF implemented.</p>
-<h3 id="splay-operation"><a name="user-content-splay-operation" href="#splay-operation" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Splay Operation</h3>
-<p><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/images/splay01.png" /></p>
-<p>Splay is a series of &ldquo;double rotation&rdquo; (and maybe one single rotation) that moves target node to root.</p>
-<p><strong>Node:</strong> A splay is not a series of (the obvious) rotations! (provably bad)</p>
-<p>So, need some operations: <code>zig, zag, zig-zig, zag-zag, zig-zag, zag-zig</code>.</p>
-<p>Examples:</p>
-<p><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/images/splay02.png" /><br />
-<img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/images/splay03.png" /></p>
-<h3 id="cool-properties"><a name="user-content-cool-properties" href="#cool-properties" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Cool Properties</h3>
-<p>Sleator and Tarjan prove a series of &ldquo;self-adjusts well&rdquo; properties of a series of <code>m</code> accesses to a splay tree of size <code>n</code>.</p>
-<p><strong>Theorem.</strong> The total access tiems is <code>O((m+n) lg n + m)</code></p>
-<p><strong>Corralary.</strong> If <code>m ≥ n</code> then <code>O(m(lg n + 1))</code> which is essencially <code>lg n</code> time <em>per access</em>.</p>
-<p><strong>Proof Tech.</strong> Developed analysis methods of <em>amortized performance</em>. <em>Potential method</em> - change of potential:</p>
-<pre><code>Φ(T) := "potential" for work of tree T
+<p><strong>Define:</strong> for any path <code>p</code> (sequence of edges)</p>
+<pre><code>w(p) := sum([ w(e) for e in p ])
+
+distance:
+d(u,v) := min( ∞ ++ [ w(p) for u~p~&gt;v ])
 </code></pre>
-<p><strong>Theorem.</strong> (Static Optimality) Total access time is <code>O(m + sum([ q(i) lg(m/q(i)) for i=1..n ]))</code></p>
-<p><strong>Theorem.</strong> (Working set) Let <code>t(j)</code> be the number of distinct items accessed since the last access to item at time <code>j</code>. Then the total access times is <code>O(m lg n + m + sum([ lg(t(j) + 1) for j=1..m ]))</code>. TL;DR: its as if for the working set, there is a balanced BST at the top of the splay tree.</p></article></body></html>
+<p><strong>Find:</strong> <code>d(s,v)</code> for all <code>v in V</code>.</p>
+<p><strong>Use:</strong> Dijkstra&rsquo;s algorithm (requires positive weights) which computes <code>v.dist, v.pred</code>.</p>
+<p><strong>Observation:</strong></p>
+<ul>
+<li>
+<p>If <code>v != s</code> and <code>v.dist &lt; ∞</code>, then for the shortest path <code>p = e.1, e.2, ... e.k</code>, <code>e.k = (v.pred v)</code>.</p>
+</li>
+<li>
+<p>If <code>v = s</code>, then <code>v.dist = 0</code>, <code>v.pred = nil</code>.</p>
+</li>
+<li>
+<p>If <code>v.dist = 0</code>, then <code>v.pred = nil</code>.</p>
+</li>
+</ul>
+<h3 id="dijkstras-algorithm"><a name="user-content-dijkstras-algorithm" href="#dijkstras-algorithm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Dijkstra&rsquo;s Algorithm</h3>
+<pre><code>Dijkstra's-SSSP+(G, s, w) :=                        # Run time:
+    for v in G.V do                                 # n
+        v.dist := ∞                                 # | n
+        v.pred := nil                               # | n
+    s.dist := 0                                     # 1
+    H := build a heap with priorities v.dist        # n
+    while H := {} do                                # n
+        u := H.Remove-Min()                         # | lg n
+        for v in { v in G.V | (u,v) in G.E } do     # | m
+            if v.dist &gt; u.dist + w(u,v) then        #   | 1
+                v.dist := u.dist + w(u,v)           #   | 1
+                v.pred := u                         #   | 1
+                H.Bubble-Up(v)                      #   | lg n
+</code></pre>
+<p><strong>Claim:</strong> When <code>u</code> is chosen from <code>H</code> wiht minimum distance, <code>u.dist = d(s,u)</code>.<br />
+<strong>Proof:</strong> Suppose, for the sake of contradiction, <code>u.dist != d(s,u)</code> for at least some <code>u</code>&lsquo;s. Consider the first time that a vertex <code>u</code> is removed from <code>H</code> where <code>u.dist != d(s,u)</code> (first time that induction hypothesis would break for positive claim). Because this is the first time, there is a shortest path <code>p</code> to <code>u.pred</code>, such that</p>
+<pre><code>w(p) = u.pred.dist = d(s,u.pred)
+</code></pre>
+<p>So we have something like</p>
+<pre><code>s ––p––&gt; u.pred -&gt; u
+|          Λ
+\––\       |
+p'  \–&gt;u'–&gt;v'
+</code></pre>
+<p>where <code>p'</code> is a shorter path than <code>p</code> and</p>
+<pre><code>w(p') &lt; w(p) + w(u.pred,u)
+</code></pre>
+<p>Consider vertices along <code>p'</code>, and let <code>(u',v')</code> cross into <code>H</code> (i.e. <code>u' not in H</code>, <code>v' in H</code>, <code>(u',v') in p'</code>) which is possible since <code>u != s ...</code>. Node that, since weights are positive:</p>
+<pre><code>v'.dist ≤ u'.dist       # v' was seen when u' was visited
++ w(u',v') ≤ w(p')      # maybe there are more edges along p' but path is part of p'
+&lt; w(p) + w(u.pred,u)    # already visited u.pred
+= u'.dist + w(u.pred,u) # already visited u.pred
+= u.dist
+=&gt; v'.dist ≤ u.dist
+=&gt; false! since then we would choose v' over u when Remove-Min
+    def of u is the one that with mim dist that we remove next
+</code></pre>
+<h2 id="bellman-ford-sssp"><a name="user-content-bellman-ford-sssp" href="#bellman-ford-sssp" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Bellman-Ford (SSSP)</h2>
+<p>(Bellman-Ford SSSP : Textbook 24.1)</p>
+<p>Lets allow 0 and negative weight edges:</p>
+<pre><code>w : E -&gt; Z
+</code></pre>
+<p>Consider the case where there is a round from <code>s</code> to <code>v</code> that meanders through a negative weight cycle:</p>
+<pre><code>s –––&gt; p –––&gt; v
+      / \
+      v Λ  (net weight change is negative)
+      \_/
+</code></pre>
+<p>Then <code>d(s,v) = -∞</code>.</p>
+<p><strong>Simple Path:</strong> a path with no loops = no repeated vertices.</p>
+<p><strong>Claim:</strong> Suppose that <code>-∞ &lt; d(s,v) &lt; ∞</code>. Then there&rsquo;s a shortest path that&rsquo;s simple.</p>
+<p><strong>Observation:</strong> A simple path can have at most <code>n-1</code> edges.</p>
+<p><strong>Define:</strong></p>
+<pre><code>D.l(s,v) = min { w(p) | s ~p~&gt; v where |p| ≤ l }
+</code></pre>
+<p><strong>Observation:</strong></p>
+<pre><code>D.0(s,v) = {
+    v = s  =&gt; 0
+    v != s =&gt; ∞
+}
+</code></pre>
+<p><strong>Observation:</strong></p>
+<pre><code>D.1(s,v) = {
+    v = s          =&gt; 0
+    (s,v) in E     =&gt; w(s,v)
+    (s,v) not in E =&gt; ∞
+}
+</code></pre></article></body></html>

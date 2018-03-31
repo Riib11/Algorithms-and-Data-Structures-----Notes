@@ -1,0 +1,10 @@
+digraph {
+    graph[ratio=1,layout=neato]
+    P -> Q
+    P -> R
+    Q -> P
+    Q -> S
+    R -> Q
+    S -> P
+    T
+}

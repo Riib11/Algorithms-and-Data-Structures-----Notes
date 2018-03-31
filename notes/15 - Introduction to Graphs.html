@@ -1014,29 +1014,44 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>14 - Splay Trees</title></head><body><article class="markdown-body"><h1 id="splay-trees"><a name="user-content-splay-trees" href="#splay-trees" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Splay Trees</h1>
-<p>A variant of a BSTree with rotations to restructure. It doesn&rsquo;t contain any additional info in the tree, like height (AVL Trees) or colors (Red-Black Trees).</p>
-<p>Inspired by &ldquo;move to front&rdquo; (MTF) hueristic for linked lists:</p>
-<pre><code>lookup target in
-(head -&gt; node -&gt; node -&gt; node -&gt; node (target) -&gt; ...)
-maps to
-(head -&gt; node (target) -&gt; node -&gt; node -&gt; node -&gt; ...)
+</style><title>15 - Introduction to Graphs</title></head><body><article class="markdown-body"><h1 id="graphs"><a name="user-content-graphs" href="#graphs" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Graphs</h1>
+<p>A <strong>graph</strong> <code>G = (V,E)</code> is made up of<br />
+- a collection of <strong>nodes</strong> (or <strong>vertices</strong>) <code>V</code><br />
+- a collection of <strong>edges</strong> <code>E</code> where <code>E subset of { u,v : u in V and v in V } = V x V</code> is a binary relation on the nodes.</p>
+<p><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/graphs/firstgraph.png" /></p>
+<p>A <strong>path</strong> is a sequence of vertices <code>P = &lt;v.0,v.1, ...,v.k&gt;</code> where <code>vi in V</code> and <code>v.i,v.(i+1) in E</code>. <code>k</code> cannot be <code>0</code>. Some example paths: <code>&lt;P,Q,R&gt;, &lt;S,P,Q,S,P,R&gt;, &lt;T&gt;</code>.</p>
+<p>A path is <strong>simple</strong> whenevre <code>v.0, v.1, ..., v.k</code> are distinct (no repeats, no cycle)</p>
+<p>A cycle is <strong>simple</strong> whenever <code>v.1, v.2, ..., v.k</code> are distinct.</p>
+<h2 id="an-algorithm"><a name="user-content-an-algorithm" href="#an-algorithm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>An Algorithm</h2>
+<p>Interested in reachability/connectivity.</p>
+<p><strong>Given:</strong> <code>G = (V,E), s in V</code>.</p>
+<p><strong>Find:</strong> <code>R = { v in V | s ~&gt; v for some path p }</code>, the vertices reachable from <code>s</code>. (graph traversal)</p>
+<pre><code>DFS-From(u, G) :=
+    if u.marked then return // already visited this node
+    u.marked := true
+    for v in { v in G.V | (u,v) in G.E }
+        DFS-From(v, G)
+
+DFS-Traverse(s, G) :=
+    for v in G.V do
+        v.marked := false
+    for v in G.V do
+        DFS-From(v, G)
 </code></pre>
-<p>This heuristic is good in some &ldquo;online&rdquo;, &ldquo;competative&rdquo; sense. Also, it doesn&rsquo;t make the operations on the list any worse than without MTF implemented.</p>
-<h3 id="splay-operation"><a name="user-content-splay-operation" href="#splay-operation" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Splay Operation</h3>
-<p><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/images/splay01.png" /></p>
-<p>Splay is a series of &ldquo;double rotation&rdquo; (and maybe one single rotation) that moves target node to root.</p>
-<p><strong>Node:</strong> A splay is not a series of (the obvious) rotations! (provably bad)</p>
-<p>So, need some operations: <code>zig, zag, zig-zig, zag-zag, zig-zag, zag-zig</code>.</p>
-<p>Examples:</p>
-<p><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/images/splay02.png" /><br />
-<img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/images/splay03.png" /></p>
-<h3 id="cool-properties"><a name="user-content-cool-properties" href="#cool-properties" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Cool Properties</h3>
-<p>Sleator and Tarjan prove a series of &ldquo;self-adjusts well&rdquo; properties of a series of <code>m</code> accesses to a splay tree of size <code>n</code>.</p>
-<p><strong>Theorem.</strong> The total access tiems is <code>O((m+n) lg n + m)</code></p>
-<p><strong>Corralary.</strong> If <code>m ≥ n</code> then <code>O(m(lg n + 1))</code> which is essencially <code>lg n</code> time <em>per access</em>.</p>
-<p><strong>Proof Tech.</strong> Developed analysis methods of <em>amortized performance</em>. <em>Potential method</em> - change of potential:</p>
-<pre><code>Φ(T) := "potential" for work of tree T
-</code></pre>
-<p><strong>Theorem.</strong> (Static Optimality) Total access time is <code>O(m + sum([ q(i) lg(m/q(i)) for i=1..n ]))</code></p>
-<p><strong>Theorem.</strong> (Working set) Let <code>t(j)</code> be the number of distinct items accessed since the last access to item at time <code>j</code>. Then the total access times is <code>O(m lg n + m + sum([ lg(t(j) + 1) for j=1..m ]))</code>. TL;DR: its as if for the working set, there is a balanced BST at the top of the splay tree.</p></article></body></html>
+<p>This would follow the paths on this graph;</p>
+<p><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/graphs/dfs01.png" /></p>
+<p>Could also write this to remember predecessors:</p>
+<pre><code>DFS-From(u, G, p) :=
+    if u.marked then return // already visited this node
+    u.marked := true
+    u.pred   := p
+    for v in { v in G.V | (u,v) in G.E }
+        DFS-From(v, G)
+
+DFS-Traverse(s, G) :=
+    for v in G.V do
+        v.marked := false
+        v.pred   := ⊥
+    for v in G.V do
+        DFS-From(v, G, nil)
+</code></pre></article></body></html>
