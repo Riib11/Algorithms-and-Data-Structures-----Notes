@@ -10,10 +10,10 @@
 
 **Define:** for any path `p` (sequence of edges)
 
-    w(p) := sum([ w(e) for e in p ])
+    w(p) := sum { w(e) for e in p }
 
     distance:
-    d(u,v) := min( ∞ ++ [ w(p) for u~p~>v ])
+    d(u,v) := min ( {∞} ++ { w(p) for u~p~>v })
 
 
 **Find:** `d(s,v)` for all `v in V`.
@@ -31,14 +31,14 @@
 ### Dijkstra's Algorithm
 
     Dijkstra's-SSSP+(G, s, w) :=                        # Run time:
-        for v in G.V do                                 # n
+        for v in G.V                                    # n
             v.dist := ∞                                 # | n
             v.pred := nil                               # | n
         s.dist := 0                                     # 1
         H := build a heap with priorities v.dist        # n
-        while H := {} do                                # n
+        while H := {}                                   # n
             u := H.Remove-Min()                         # | lg n
-            for v in { v in G.V | (u,v) in G.E } do     # | m
+            for v in { v in G.V | (u,v) in G.E }        # | m
                 if v.dist > u.dist + w(u,v) then        #   | 1
                     v.dist := u.dist + w(u,v)           #   | 1
                     v.pred := u                         #   | 1
@@ -51,10 +51,10 @@
 
 So we have something like
 
-    s ––p––> u.pred -> u
-    |          Λ
-    \––\       |
-    p'  \–>u'–>v'
+    s ~~~~p~~~> u.pred ~> u
+    |             Λ
+    \~~\          |
+    p'  \~> u' ~> v'
 
 where `p'` is a shorter path than `p` and
 
@@ -98,19 +98,65 @@ Then `d(s,v) = -∞`.
 
 **Define:**
 
-    D.l(s,v) = min { w(p) | s ~p~> v where |p| ≤ l }
+    D.l(s,v) := min { w(p) | s ~p~> v where |p| ≤ l }
 
-**Observation:**
+**Recurrence:**
 
-    D.0(s,v) = {
+    D.0(s,v) := {
         v = s  => 0
         v != s => ∞
     }
 
+    D.(k+1)(s,v) := min { D.k(s,v) , min { D.k(s,v) + w(u,v) | (u,v) in E } }
+
 **Observation:**
 
-    D.1(s,v) = {
+    D.1(s,v) := {
         v = s          => 0
         (s,v) in E     => w(s,v)
         (s,v) not in E => ∞
     }
+
+**Dynamic Programming (Teaser):** Keep track of all the cases of a function up to the case that you want (in a recursive manner). An example is the linear-time computation of the Fibonacci sequence.
+
+### Psuedocode
+
+    Belman-Ford(G, s, w) :=
+        for v in G.V                            # for each vertex
+            v.dist := ∞                         # distance is ∞
+            v.pred := nil                       # pred is nil
+        s.dist := 0                             # except the starting vertex, which is 0 distance
+        for |G.V|-1 times
+            for (u,v) in G.E                    # visit each edge
+                new_dist := u.dist + w(u,v)     # calc distance
+                if new_dist < v.dist            # update if shorter than previous shortest
+                    v.dist := new_dist
+                    v.pred := u
+        for (u,v) in G.E                        # if any edge
+            if u.dist + w(u,v) < v.dist         # has a shorter path than already found,
+                return false                    # then this is an invalid graph (undefined)
+        return true                             # otherwise, valid graph (defiend)
+
+**Claim:** `forall v, d(s,v) > -∞ -> Belman-Ford(G, s, w) = true`. (defined)
+
+**Claim:** `exists v, d(s,v) = -∞ -> Belman-Ford(G, s, w) = false`. (not defined)
+
+### Runtime Analysis
+
+    Belman-Ford(G, s, w) :=
+        for v in G.V                            # n
+            v.dist := ∞                         # | 1
+            v.pred := nil                       # | 1
+        s.dist := 0                             # 1
+        for |G.V|-1 times                       # n
+            for (u,v) in G.E                    # | m
+                new_dist := u.dist + w(u,v)     #   | 1
+                if new_dist < v.dist            #   | 1
+                    v.dist := new_dist          #   | 1
+                    v.pred := u                 #   | 1
+        for (u,v) in G.E                        # m
+            if u.dist + w(u,v) < v.dist         # | 1
+                return false                    # | 1
+        return true                             # 1
+
+**Running Time:** `Θ(m n)` (whereas Dijkstra runs in `O( (n+m) lg n)`)
