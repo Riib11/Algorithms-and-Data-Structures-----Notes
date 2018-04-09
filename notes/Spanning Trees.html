@@ -1014,35 +1014,55 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>09 - Radix Sort</title></head><body><article class="markdown-body"><h1 id="radix-sort"><a name="user-content-radix-sort" href="#radix-sort" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Radix Sort</h1>
-<p>First, understand count sort (in 08).</p>
-<p><strong>Idea:</strong> Universe is <code>{0..r^d - 1}</code>, and interpret keys of input array as base <code>r</code>. <code>d</code> is number of digits per entry, in base <code>r</code>.</p>
-<pre><code>radixsort(A, n, r, d)
-    // count array
-    B := new array of [1..n]
-
-    for p := 0 to d-1
-        countsort by p'th digit, A -&gt; B
-        copy B back to A
+</style><title>Spanning Trees</title></head><body><article class="markdown-body"><h1 id="spanning-trees"><a name="user-content-spanning-trees" href="#spanning-trees" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Spanning Trees</h1>
+<p><strong>Spaning</strong>: A subset <code>A</code> of <code>E</code> <strong>spans</strong> <code>G = (E,V)</code> when a subgraph <code>G_A = (V,A)</code> is connected.</p>
+<p><strong>Spanning Tree</strong>: A tree <code>T</code> subset of <code>E</code> is a <strong>spanning tree</strong> when <code>T</code> spans <code>G</code>.</p>
+<p>Note: BFS, DFS, and Dijkstra&rsquo;s algorithm calculate spanning trees (not necessarily minimum spanning trees though).</p>
+<h2 id="spanning-tree-problem-mst"><a name="user-content-spanning-tree-problem-mst" href="#spanning-tree-problem-mst" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Spanning Tree Problem (MST)</h2>
+<pre><code>span(G) := { T subset E | T : spanning tree of G }
 </code></pre>
-<p><strong>Example:</strong></p>
-<pre><code>d = 3
-r = 10
-n = 9
-
-// does 3 passes over the 9 keys, and count sort one digit each time (left, middle, or right digit)
-// sort by 1's digit first, then r'2, then r^2's, etc.
-
-//    1st    2nd    3rd
-A =   -&gt;     -&gt;     -&gt; 
-[ 961    310    310    162
-, 858    940    818    235
-, 310    961    235    310
-, 818    951    940    363
-, 940    162    951    818
-, 363    363    858    858
-, 951    235    961    940
-, 162    858    162    951
-, 235    818    363    961
-]
+<p>If <code>w : E -&gt; Z</code> is the weight function on edges, then for <code>A subset E</code> define <code>w(A) := sum { w(e) | e in E }</code>.</p>
+<h3 id="problem-setup"><a name="user-content-problem-setup" href="#problem-setup" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Problem Setup:</h3>
+<p><strong>Given:</strong></p>
+<pre><code>G = (V,E)
+w : E -&gt; Z
+</code></pre>
+<p><strong>Goal:</strong></p>
+<pre><code>T in span(G) such that forall T' in span(G), w(T) ≤ w(T')
+</code></pre>
+<p><strong>Prim&rsquo;s-MST</strong>(G, w)</p>
+<pre><code>s := choose some element of G.V
+for v in G.V
+    v.weight := ∞
+    v.pred   := nil
+s.weight := 0
+H := new Min-Heap of G.V using .weight
+while H != {}
+    u := H.remove-min() # lightest vertex connected to tree
+    for v in G.V where (u,v) in G.E
+        if v.weight &gt; w(u,v)
+            v.weight := w(u,v)
+            v.pred   := u
+            H.bubble-up(v)
+return { (v.pred, v) | v != s } # tree edges
+</code></pre>
+<p><strong>Claim:</strong> <code>Prim's-MST(G, w)</code> is a minimum spanning tree.</p>
+<p>To understand why this is true, check out some other more general structure of MSTs.</p>
+<p>Let <code>W subset V</code>. This forms a cut <code>(W, V \ W)</code>. Then the <strong>crossing edges</strong> of this cut are <code>X(W) := { (u,v) in E | u in W, v in V \ W }</code></p>
+<p><strong>Respects a cut</strong>: <code>A subset E</code> <strong>respects a cut</strong> if <code>A intersect X(w) = {}</code>.</p>
+<p><strong>Light</strong>: <code>X(w)</code> is <strong>light</strong> for a cut when <code>w(e) = min { w(e') | e' in X(w) }</code>.</p>
+<p><strong>Find-MST</strong>(G, w):</p>
+<pre><code>F := {} # forest
+while |F| &lt; |G.V| - 1 # while forest is not tree
+    W := some cut that F respects
+    e := light edge of X(w)
+    F := F union {e}
+return F # will be tree
+</code></pre>
+<p><strong>Claim</strong>: <code>Find-MST(G, w)</code> is a minimum spanning tree (easy to see). Then, <code>Prim's-MST</code> is an implementation of <code>Find-MST</code>, so the previous claim also follows.</p>
+<p><strong>Theorem</strong>: Let <code>F subset T</code> where <code>T</code> is a minimum spanning tree, <code>F</code> respect some cut <code>W</code>, and <code>e</code> be light for that cut. Then <code>F + e</code> is a subset of some MST.</p>
+<p><strong>Proof</strong>:</p>
+<p>Suppose <code>e not in T</code>. Let <code>e in T intersect X(w)</code>. Consider <code>T' = (T = e') \ {e}</code>, which is also a spannng tree. Then</p>
+<pre><code>w(T') = w(T) - w(e') + w(e)
+w(T') ≤ w(T) # since w(e) - w(e') ≤ 0
 </code></pre></article></body></html>

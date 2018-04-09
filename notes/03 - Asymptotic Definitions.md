@@ -24,11 +24,19 @@
 
 ## Θ(n): big Theta
 
-(Asymptoticall tightly bound, same asymptotic order)
+(Asymptotically tightly bound, same asymptotic order)
 
 `f(n) = Θ( g(n) )` means that there are positive constants `c1,c2,k` such that, for all `n ≥ k`,
 
     0 ≤ c1 g(n) ≤ f(n) ≤ c2 g(n).
+
+## Ω(n) : Big Omega
+
+(Asymptotic lower bound)
+
+`f(n) = Ω( g(n) )` means that for all `n` greater than some `n0` and for some constant `k`,
+
+    f(n) > k g(n)
 
 ## Asymptotically Non-Negative
 
