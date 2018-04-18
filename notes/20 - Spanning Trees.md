@@ -71,3 +71,66 @@ Suppose `e not in T`. Let `e in T intersect X(w)`. Consider `T' = (T = e') \ {e}
     w(T') ≤ w(T) # since w(e) - w(e') ≤ 0
 
 SO `T'` is also a minimum spanning tree.
+
+### Kruskal
+
+**Kruskal-MST**(G, w)
+
+        { e.i } := sequence of the m edges sorted by non-decreasing weight
+        F := {}
+        Make-Sets(n) # init partitions of G.v
+        for i from 1 to m
+            (u,v) := e.i
+            # if adding e.i doesn't create a cycle
+            if Component-Find(u) = Component-Find(v) # if u,v are in different components of F # 
+                F := F + e
+                Component-Union(u,v) # combine the components of u,v in F
+        return F # by theorem above, F is a MST
+
+
+#### Runtime Analysis**
+
+| operation | runtime                                   |
+|-----------|-------------------------------------------|
+| `{ e.i }:= ...`           | `Θ(m lg m)`               |
+| `Make-Sets(n)`            | `Θ(n)`                    |
+| `Component-Find(u or v)`  | `Θ(m(const + T.F + T.U))` |
+| `T.F and T.U`             | `O(lg*n)`                 |
+
+#### Idea #1
+
+Keep trakc of an array `p[1...n]` (index is vertex #) where `p[i]` is the "name" of the partition containing `i`. Use `1...n` as the names of the partition. When unioning, label all the elements of smaller set of the union operation with the label of the larget set of the union operation. Is `O(n lg n)`
+
+#### Idea #2
+
+Union by relinking
+
+**Component-Union**(i, j)
+
+    x := Component-Of(i)
+    y := Component-Of(j)
+    p[x] := y
+
+**Component-Find**(i)
+
+    if p[i] = i
+        return i
+    else
+        x := Find(p[i])
+        p[i] := x # path compression
+        return x
+
+**Example**
+
+![](assets/graphs/kruskal_idea2_0.png)
+`Component-Union(3,4)`:
+![](assets/graphs/kruskal_idea2_1.png)
+
+This, however, could lead to really long chains.
+
+#### Idea #3
+
+In order to prevent ever increasing chains, keep trank of the rank of `i`:
+
+    r[i] := height of tree that is at or below i
+

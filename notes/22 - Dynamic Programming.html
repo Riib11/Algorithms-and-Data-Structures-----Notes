@@ -1014,55 +1014,194 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>Spanning Trees</title></head><body><article class="markdown-body"><h1 id="spanning-trees"><a name="user-content-spanning-trees" href="#spanning-trees" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Spanning Trees</h1>
-<p><strong>Spaning</strong>: A subset <code>A</code> of <code>E</code> <strong>spans</strong> <code>G = (E,V)</code> when a subgraph <code>G_A = (V,A)</code> is connected.</p>
-<p><strong>Spanning Tree</strong>: A tree <code>T</code> subset of <code>E</code> is a <strong>spanning tree</strong> when <code>T</code> spans <code>G</code>.</p>
-<p>Note: BFS, DFS, and Dijkstra&rsquo;s algorithm calculate spanning trees (not necessarily minimum spanning trees though).</p>
-<h2 id="spanning-tree-problem-mst"><a name="user-content-spanning-tree-problem-mst" href="#spanning-tree-problem-mst" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Spanning Tree Problem (MST)</h2>
-<pre><code>span(G) := { T subset E | T : spanning tree of G }
+</style><title>22 - Dynamic Programming</title></head><body><article class="markdown-body"><h1 id="dynamic-programming"><a name="user-content-dynamic-programming" href="#dynamic-programming" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Dynamic Programming</h1>
+<ul>
+<li>&lsquo;Dynamic&rsquo; means some applicatiosn relate to scheduling over time</li>
+<li>Devise a recurrence; usually exponential</li>
+<li>Solve the recurrence by filling out a (poly-size) table</li>
+</ul>
+<h3 id="application-strings"><a name="user-content-application-strings" href="#application-strings" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Application: Strings</h3>
+<p>Consider two strings <code>x,y in Σ*</code> where <code>Σ*</code> is the set of all strings of all lengths in alphabet <code>Σ</code>, including the empty string (σ).</p>
+<pre><code>n := |x|
+σ.1 ... σ.n := x
+m := |y|
+τ.1 ... τ.m  := y
 </code></pre>
-<p>If <code>w : E -&gt; Z</code> is the weight function on edges, then for <code>A subset E</code> define <code>w(A) := sum { w(e) | e in E }</code>.</p>
-<h3 id="problem-setup"><a name="user-content-problem-setup" href="#problem-setup" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Problem Setup:</h3>
-<p><strong>Given:</strong></p>
-<pre><code>G = (V,E)
-w : E -&gt; Z
+<p><strong>Goal:</strong> Find the longest common subsequence <code>z := LCS(x,y)</code>.</p>
+<p>(Example of a subsequence: <strong>A</strong>G<strong>GT</strong>C<strong>A</strong>G -&gt; AGTA)</p>
+<p>Choose <code>l ≤ min(n,m)</code> where <code>i.i &lt; i.(i+1)</code> and <code>j.i &lt; j.(i+1)</code> such that <code>σ.(i.i) = τ.(j.i)</code>. Suppose <code>x' = x • σ, y' = y • τ, z' = LCS(x',y')</code>, and <code>z' = z • ρ</code>.</p>
+<p>Two cases:</p>
+<ol>
+<li><code>σ = τ</code> =&gt; <code>ρ = σ = τ</code> and <code>z = LCS(x,y)</code>.</li>
+<li><code>σ != τ</code> =&gt;<ol>
+<li><code>ρ != σ =&gt; z' = LCS(x, y • τ = y')</code>.</li>
+<li><code>ρ != τ =&gt; z' = LCS(x • σ = x, y)</code>.</li>
+</ol>
+</li>
+</ol>
+<p>Base cases:</p>
+<ol>
+<li><code>LCS(\epsilon, y) := \epsilon</code>.</li>
+<li><code>LCS(x, \epsilon) := \epsilon</code>.</li>
+<li><code>LCS(x • σ, y • τ)</code> :=<ol>
+<li><code>σ = τ =&gt; LCS(x,y) • σ</code>.</li>
+<li><code>σ != τ</code> =&gt; Longer of <code>{ LCS(x • σ, y), LCS(x, y • τ) }</code></li>
+</ol>
+</li>
+</ol>
+<p><strong>Recurrence:</strong></p>
+<pre><code>LCS(x • σ, y • τ) := {
+    σ = τ =&gt;
+        LCS(x,y) • σ
+    σ != τ =&gt;
+        Longest( LCS(x•σ,y), LCS(x,y•τ) )
+}
 </code></pre>
-<p><strong>Goal:</strong></p>
-<pre><code>T in span(G) such that forall T' in span(G), w(T) ≤ w(T')
+<p>But we don&rsquo;t want to have evaluate this recursively.</p>
+<p><strong>The Table Entries</strong></p>
+<p>Define for all <code>i,j</code> wiht <code>0 ≤ i ≤ n</code>, <code>0 ≤ j ≤ n</code>,</p>
+<pre><code>c[i,j] := | LCS( σ.1 σ.2 ... σ.i, τ.1 τ.2 ... τ.j ) |
 </code></pre>
-<p><strong>Prim&rsquo;s-MST</strong>(G, w)</p>
-<pre><code>s := choose some element of G.V
-for v in G.V
-    v.weight := ∞
-    v.pred   := nil
-s.weight := 0
-H := new Min-Heap of G.V using .weight
-while H != {}
-    u := H.remove-min() # lightest vertex connected to tree
-    for v in G.V where (u,v) in G.E
-        if v.weight &gt; w(u,v)
-            v.weight := w(u,v)
-            v.pred   := u
-            H.bubble-up(v)
-return { (v.pred, v) | v != s } # tree edges
+<p>Note that</p>
+<pre><code>c[0,j] = c[i,0] = 0
+c[i,j] = {
+    σ.i = τ.i =&gt; c[i-1,j-1]
+    max{ c[i,-1j], c[i-1,j] } =&gt; σ.i != σ.j
+}
+
+d[i,0] = d[0,j] = (*)
+d[i,j] = {
+    σ.i = τ.i =&gt; up-left
+    σ.i != τ.i =&gt; max{ left entry, up entry } }
 </code></pre>
-<p><strong>Claim:</strong> <code>Prim's-MST(G, w)</code> is a minimum spanning tree.</p>
-<p>To understand why this is true, check out some other more general structure of MSTs.</p>
-<p>Let <code>W subset V</code>. This forms a cut <code>(W, V \ W)</code>. Then the <strong>crossing edges</strong> of this cut are <code>X(W) := { (u,v) in E | u in W, v in V \ W }</code></p>
-<p><strong>Respects a cut</strong>: <code>A subset E</code> <strong>respects a cut</strong> if <code>A intersect X(w) = {}</code>.</p>
-<p><strong>Light</strong>: <code>X(w)</code> is <strong>light</strong> for a cut when <code>w(e) = min { w(e') | e' in X(w) }</code>.</p>
-<p><strong>Find-MST</strong>(G, w):</p>
-<pre><code>F := {} # forest
-while |F| &lt; |G.V| - 1 # while forest is not tree
-    W := some cut that F respects
-    e := light edge of X(w)
-    F := F union {e}
-return F # will be tree
+<p>where <code>(*)</code> means &ldquo;stop&rdquo;.</p>
+<p><strong>The Table</strong></p>
+<p>Example for <code>LCS("ACGCTAC", "CTGACA")</code>,</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>0</strong></th>
+<th><strong>C</strong></th>
+<th><strong>T</strong></th>
+<th><strong>G</strong></th>
+<th><strong>A</strong></th>
+<th><strong>C</strong></th>
+<th><strong>A</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0</strong></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><strong>A</strong></td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+</tr>
+<tr>
+<td><strong>G</strong></td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>3</td>
+<td>3</td>
+</tr>
+<tr>
+<td><strong>T</strong></td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>3</td>
+<td>3</td>
+</tr>
+<tr>
+<td><strong>A</strong></td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>3</td>
+<td>3</td>
+<td>4</td>
+</tr>
+<tr>
+<td><strong>C</strong></td>
+<td>0</td>
+<td>1</td>
+<td>2</td>
+<td>2</td>
+<td>3</td>
+<td>4</td>
+<td>4</td>
+</tr>
+</tbody>
+</table>
+<pre><code>Best-LCS(x,y) :=
+    n := |x|
+    m := |y|
+    c := (n+1) by (m+1) table of 0
+    d := (n+1) by (m+1) table of (*)
+    for j from 1 to m
+        if x[i] = y[j]
+            c[i,j] := c[i-1,j-1] + 1
+            d[i,j] := up-left entry
+        else if c[i,j-1] &gt; c[i-1,j]
+            c[i,j] := c[i,j-1]
+            d[i,j] := left entry
+        else
+            c[i,j] := c[i-1,j]
+            d[i,j] := up entry
 </code></pre>
-<p><strong>Claim</strong>: <code>Find-MST(G, w)</code> is a minimum spanning tree (easy to see). Then, <code>Prim's-MST</code> is an implementation of <code>Find-MST</code>, so the previous claim also follows.</p>
-<p><strong>Theorem</strong>: Let <code>F subset T</code> where <code>T</code> is a minimum spanning tree, <code>F</code> respect some cut <code>W</code>, and <code>e</code> be light for that cut. Then <code>F + e</code> is a subset of some MST.</p>
-<p><strong>Proof</strong>:</p>
-<p>Suppose <code>e not in T</code>. Let <code>e in T intersect X(w)</code>. Consider <code>T' = (T = e') \ {e}</code>, which is also a spannng tree. Then</p>
-<pre><code>w(T') = w(T) - w(e') + w(e)
-w(T') ≤ w(T) # since w(e) - w(e') ≤ 0
-</code></pre></article></body></html>
+<p><strong>Running time</strong></p>
+<pre><code>O(m n)
+</code></pre>
+<h4 id="example-reading-a-book"><a name="user-content-example-reading-a-book" href="#example-reading-a-book" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Example: Reading a book</h4>
+<p>Summer is 14 weeks long.<br />
+Some novel contains <code>N</code> sections, with lengths <code>l.1, l.2, ... l.N</code>.<br />
+<code>L.i = sum{ l.j for j from 1 to i }</code> is the number of pages after reading <code>i</code> sections.<br />
+<code>P = L.N</code><br />
+<code>α = P/W</code><br />
+<code>m.i = { "major section" =&gt; 1, "minor section" =&gt; 0 }</code></p>
+<p><strong>Goal</strong></p>
+<p>Optimal schedule <code>1 = S.1 &lt; S.2 &lt; ... &lt; S.W &lt; S.(W+1) = N+1 (bogus)</code><br />
+<code>S.k =</code> section # started on week <code>k</code>. Want to <strong>minimize</strong></p>
+<pre><code>sum{ (L.(S.k - 1) - L(S.k) - α)^2 + (1-m.(S.k)) β }
+</code></pre>
+<p>where <code>L.(S.k - 1) - L(S.k)</code> is the # of pages read in week <code>k</code> and <code>β</code> is some penalty factor.</p></article></body></html>
