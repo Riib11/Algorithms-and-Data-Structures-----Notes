@@ -1014,138 +1014,38 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>17 - Shortest Paths</title></head><body><article class="markdown-body"><h1 id="shortest-paths"><a name="user-content-shortest-paths" href="#shortest-paths" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Shortest Paths</h1>
-<h2 id="single-source-shortest-path-problem-with-positive-weights-sssp"><a name="user-content-single-source-shortest-path-problem-with-positive-weights-sssp" href="#single-source-shortest-path-problem-with-positive-weights-sssp" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Single Source Shortest Path Problem with Positive Weights (SSSP+)</h2>
-<p>(Dijkstra&rsquo;s Algorithm : Textbook 24.3)</p>
-<p><strong>Given:</strong></p>
-<pre><code>G = (V, E), s in V, w : E -&gt; Z+
+</style><title>12 - Traversals</title></head><body><article class="markdown-body"><h1 id="traversals"><a name="user-content-traversals" href="#traversals" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Traversals</h1>
+<p>This will act upon a BSTree, but generalizes to graph traversals.</p>
+<h2 id="in-order"><a name="user-content-in-order" href="#in-order" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>In Order</h2>
+<pre><code>T.inorder_traverse() :=
+    x := T.min_node() // worst case: n
+    while x := nil
+        visit(x)
+    x := succ_node(x) // can be complicated...
+                      // worse case: n?
 </code></pre>
-<p><strong>Define:</strong> for any path <code>p</code> (sequence of edges)</p>
-<pre><code>w(p) := sum { w(e) for e in p }
+<p>this would lead to <code>O(n^2)</code> time, but that&rsquo;s not the case. Actually, its <code>Θ(n)</code>, since you touch each node 3 times, and go along each edge twice, and both of these things are linear in <code>n</code>. So instead, can do it recursively:</p>
+<pre><code>T.inorder_traverse() :=
+    inorder(T.root)
 
-distance:
-d(u,v) := min ( {∞} ++ { w(p) for u~p~&gt;v })
-</code></pre>
-<p><strong>Find:</strong> <code>d(s,v)</code> for all <code>v in V</code>.</p>
-<p><strong>Use:</strong> Dijkstra&rsquo;s algorithm (requires positive weights) which computes <code>v.dist, v.pred</code>.</p>
-<p><strong>Observation:</strong></p>
-<ul>
-<li>
-<p>If <code>v != s</code> and <code>v.dist &lt; ∞</code>, then for the shortest path <code>p = e.1, e.2, ... e.k</code>, <code>e.k = (v.pred v)</code>.</p>
-</li>
-<li>
-<p>If <code>v = s</code>, then <code>v.dist = 0</code>, <code>v.pred = nil</code>.</p>
-</li>
-<li>
-<p>If <code>v.dist = 0</code>, then <code>v.pred = nil</code>.</p>
-</li>
-</ul>
-<h3 id="dijkstras-algorithm"><a name="user-content-dijkstras-algorithm" href="#dijkstras-algorithm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Dijkstra&rsquo;s Algorithm</h3>
-<pre><code>Dijkstra's-SSSP+(G, s, w) :=                        # Run time:
-    for v in G.V                                    # n
-        v.dist := ∞                                 # | n
-        v.pred := nil                               # | n
-    s.dist := 0                                     # 1
-    H := build a heap with priorities v.dist        # n
-    while H != {}                                   # n
-        u := H.Remove-Min()                         # | lg n
-        for v in { v in G.V | (u,v) in G.E }        # | m
-            if v.dist &gt; u.dist + w(u,v) then        #   | 1
-                v.dist := u.dist + w(u,v)           #   | 1
-                v.pred := u                         #   | 1
-                H.Bubble-Up(v)                      #   | lg n
-</code></pre>
-<p><strong>Claim:</strong> When <code>u</code> is chosen from <code>H</code> wiht minimum distance, <code>u.dist = d(s,u)</code>.<br />
-<strong>Proof:</strong> Suppose, for the sake of contradiction, <code>u.dist != d(s,u)</code> for at least some <code>u</code>&lsquo;s. Consider the first time that a vertex <code>u</code> is removed from <code>H</code> where <code>u.dist != d(s,u)</code> (first time that induction hypothesis would break for positive claim). Because this is the first time, there is a shortest path <code>p</code> to <code>u.pred</code>, such that</p>
-<pre><code>w(p) = u.pred.dist = d(s,u.pred)
-</code></pre>
-<p>So we have something like</p>
-<pre><code>s ~~~~p~~~&gt; u.pred ~&gt; u
-|             Λ
-\~~\          |
-p'  \~&gt; u' ~&gt; v'
-</code></pre>
-<p>where <code>p'</code> is a shorter path than <code>p</code> and</p>
-<pre><code>w(p') &lt; w(p) + w(u.pred,u)
-</code></pre>
-<p>Consider vertices along <code>p'</code>, and let <code>(u',v')</code> cross into <code>H</code> (i.e. <code>u' not in H</code>, <code>v' in H</code>, <code>(u',v') in p'</code>) which is possible since <code>u != s ...</code>. Node that, since weights are positive:</p>
-<pre><code>v'.dist ≤ u'.dist       # v' was seen when u' was visited
-+ w(u',v') ≤ w(p')      # maybe there are more edges along p' but path is part of p'
-&lt; w(p) + w(u.pred,u)    # already visited u.pred
-= u'.dist + w(u.pred,u) # already visited u.pred
-= u.dist
-=&gt; v'.dist ≤ u.dist
-=&gt; false! since then we would choose v' over u when Remove-Min
-    def of u is the one that with mim dist that we remove next
-</code></pre>
-<h2 id="bellman-ford-sssp"><a name="user-content-bellman-ford-sssp" href="#bellman-ford-sssp" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Bellman-Ford (SSSP)</h2>
-<p>(Bellman-Ford SSSP : Textbook 24.1)</p>
-<p>Lets allow 0 and negative weight edges:</p>
-<pre><code>w : E -&gt; Z
-</code></pre>
-<p>Consider the case where there is a round from <code>s</code> to <code>v</code> that meanders through a negative weight cycle:</p>
-<pre><code>s –––&gt; p –––&gt; v
-      / \
-     ↓   ↑ (net weight change is negative)
-      \_/
-</code></pre>
-<p>Then <code>d(s,v) = -∞</code>.</p>
-<p><strong>Simple Path:</strong> a path with no loops = no repeated vertices.</p>
-<p><strong>Claim:</strong> Suppose that <code>-∞ &lt; d(s,v) &lt; ∞</code>. Then there&rsquo;s a shortest path that&rsquo;s simple.</p>
-<p><strong>Observation:</strong> A simple path can have at most <code>n-1</code> edges.</p>
-<p><strong>Define:</strong></p>
-<pre><code>D.l(s,v) := min { w(p) | s ~p~&gt; v where |p| ≤ l }
-</code></pre>
-<p><strong>Recurrence:</strong></p>
-<pre><code>D.0(s,v) := {
-    v = s  =&gt; 0
-    v != s =&gt; ∞
-}
+inorder(x) :=
+    if x != nil
+        inorder(x.left) // access each down link once (linear with n)
+        visit(x)        // access each node once (linear with n)
+        inorder(x.right) // access each down link once (linear with n)
 
-D.(k+1)(s,v) := min { D.k(s,v) , min { D.k(s,v) + w(u,v) | (u,v) in E } }
+visit(x) :=
+    print(x.key) or the like
 </code></pre>
-<p><strong>Observation:</strong></p>
-<pre><code>D.1(s,v) := {
-    v = s          =&gt; 0
-    (s,v) in E     =&gt; w(s,v)
-    (s,v) not in E =&gt; ∞
-}
+<p>So, is <code>Θ(n)</code>.</p>
+<pre><code>preorder(x) :=
+    if != nil
+        visit(x)
+        preorder(x.left)
+        preorder(x.right)
 </code></pre>
-<p><strong>Dynamic Programming (Teaser):</strong> Keep track of all the cases of a function up to the case that you want (in a recursive manner). An example is the linear-time computation of the Fibonacci sequence.</p>
-<h3 id="psuedocode"><a name="user-content-psuedocode" href="#psuedocode" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Psuedocode</h3>
-<pre><code>Belman-Ford(G, s, w) :=
-    for v in G.V                            # for each vertex
-        v.dist := ∞                         # distance is ∞
-        v.pred := nil                       # pred is nil
-    s.dist := 0                             # except the starting vertex, which is 0 distance
-    for |G.V|-1 times
-        for (u,v) in G.E                    # visit each edge
-            new_dist := u.dist + w(u,v)     # calc distance
-            if new_dist &lt; v.dist            # update if shorter than previous shortest
-                v.dist := new_dist
-                v.pred := u
-    for (u,v) in G.E                        # if any edge
-        if u.dist + w(u,v) &lt; v.dist         # has a shorter path than already found,
-            return false                    # then this is an invalid graph (undefined)
-    return true                             # otherwise, valid graph (defiend)
-</code></pre>
-<p><strong>Claim:</strong> <code>forall v, d(s,v) &gt; -∞ -&gt; Belman-Ford(G, s, w) = true</code>. (defined)</p>
-<p><strong>Claim:</strong> <code>exists v, d(s,v) = -∞ -&gt; Belman-Ford(G, s, w) = false</code>. (not defined)</p>
-<h3 id="runtime-analysis"><a name="user-content-runtime-analysis" href="#runtime-analysis" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Runtime Analysis</h3>
-<pre><code>Belman-Ford(G, s, w) :=
-    for v in G.V                            # n
-        v.dist := ∞                         # | 1
-        v.pred := nil                       # | 1
-    s.dist := 0                             # 1
-    for |G.V|-1 times                       # n
-        for (u,v) in G.E                    # | m
-            new_dist := u.dist + w(u,v)     #   | 1
-            if new_dist &lt; v.dist            #   | 1
-                v.dist := new_dist          #   | 1
-                v.pred := u                 #   | 1
-    for (u,v) in G.E                        # m
-        if u.dist + w(u,v) &lt; v.dist         # | 1
-            return false                    # | 1
-    return true                             # 1
-</code></pre>
-<p><strong>Running Time:</strong> <code>Θ(m n)</code> (whereas Dijkstra runs in <code>O( (n+m) lg n)</code>)</p></article></body></html>
+<p>This is good for recreating the tree (tear down then recreate). For example, could write contents of graph to an array in a file, and then load them back into a tree by doing a bunch of inserts.</p>
+<p>What about <code>insert</code>, <code>delete</code> and <code>lookup</code>?</p>
+<pre><code>worst case: linear time (if tree is completely unbalanced)
+typically:  log. of size of tree, Θ(lg n) (if average balance)
+</code></pre></article></body></html>

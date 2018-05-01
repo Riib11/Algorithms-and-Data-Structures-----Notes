@@ -36,7 +36,7 @@
             v.pred := nil                               # | n
         s.dist := 0                                     # 1
         H := build a heap with priorities v.dist        # n
-        while H := {}                                   # n
+        while H != {}                                   # n
             u := H.Remove-Min()                         # | lg n
             for v in { v in G.V | (u,v) in G.E }        # | m
                 if v.dist > u.dist + w(u,v) then        #   | 1

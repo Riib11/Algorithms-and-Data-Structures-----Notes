@@ -98,6 +98,8 @@ Example for `LCS("ACGCTAC", "CTGACA")`,
                 c[i,j] := c[i-1,j]
                 d[i,j] := up entry
 
+wysiwyg
+
 **Running time**
 
     O(m n)

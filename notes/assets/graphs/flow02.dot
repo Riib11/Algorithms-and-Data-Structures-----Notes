@@ -1,0 +1,18 @@
+digraph Flow02 {
+
+    graph[ratio=1,label="Flow Optimal"]
+
+    s -> a [label="3/3"]
+    s -> b [label="1/3"]
+
+    a -> c [label="3/3"]
+    a -> b [label="0/2"]
+
+    b -> d [label="2/2"]
+
+    c -> t [label="2/2"]
+    c -> d [label="1/4"]
+
+    d -> t [label="3/3"]
+
+}

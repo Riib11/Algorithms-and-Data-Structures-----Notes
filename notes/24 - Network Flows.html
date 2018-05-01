@@ -1014,138 +1014,63 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>17 - Shortest Paths</title></head><body><article class="markdown-body"><h1 id="shortest-paths"><a name="user-content-shortest-paths" href="#shortest-paths" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Shortest Paths</h1>
-<h2 id="single-source-shortest-path-problem-with-positive-weights-sssp"><a name="user-content-single-source-shortest-path-problem-with-positive-weights-sssp" href="#single-source-shortest-path-problem-with-positive-weights-sssp" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Single Source Shortest Path Problem with Positive Weights (SSSP+)</h2>
-<p>(Dijkstra&rsquo;s Algorithm : Textbook 24.3)</p>
-<p><strong>Given:</strong></p>
-<pre><code>G = (V, E), s in V, w : E -&gt; Z+
+</style><title>24 - Network Flows</title></head><body><article class="markdown-body"><h1 id="network-flows"><a name="user-content-network-flows" href="#network-flows" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Network Flows</h1>
+<p>Consider a directed graph <code>G = (V,E)</code> and distinguished <code>s,y in V, s != t</code>. Furthermode, if <code>(u,v) in E</code> then <code>v != s, u != t</code> where<br />
+- <code>s</code> is a <strong>source vertex</strong> (only has outgoing edges)<br />
+- <code>t</code> is the <strong>sink vertex</strong> (only has incoming edges)</p>
+<p>Consider the transport of some commodity from <code>s</code> to <code>t</code>, through network, with delivery restricted over edges. Each edge <code>e</code> has a capacity <code>c(e)</code> where <code>c :E-&gt;Z+</code>.</p>
+<ol>
+<li>Capacity: <code>0 ≤ f(e) ≤ c(e)</code></li>
+<li>Conservation: <code>sum{ f(u,v) for u in V } = sum{ f(v,w) for w in V } for all v in V \ {s,t}</code></li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>First attempt: Flow value = 4</th>
+<th>Optimal: Flow value = 5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/graphs/flow01.png" /></td>
+<td><img alt="" src="/Users/Henry/Documents/Drive/Classes/AlgorithmsAndDataStructures/notes/assets/graphs/flow02.png" /></td>
+</tr>
+</tbody>
+</table>
+<p>where each edge is labeled with <code>flow / capacity</code>.</p>
+<h2 id="max-flow-problem"><a name="user-content-max-flow-problem" href="#max-flow-problem" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Max Flow Problem</h2>
+<p>Find flow <code>f</code> that maximizes <code>val(f)</code>.</p>
+<p><strong>Def.</strong> <code>val(f) = sum{ f(s,v) for v in V }</code></p>
+<p><strong>Def.</strong> An <code>s-t</code> cut is a partition of the vertices into sets <code>S,T</code> where <code>s in S, t in T</code>.</p>
+<p><strong>Def.</strong> Net flow across a cut</p>
+<pre><code>f(S,T) := sum{ f(u,v) for u in S, v in T, (u,v) in E } // forw flow
+        - sum{ f(v,u) for u in T, v in S, (u,v) in E } // back flow
 </code></pre>
-<p><strong>Define:</strong> for any path <code>p</code> (sequence of edges)</p>
-<pre><code>w(p) := sum { w(e) for e in p }
+<p><strong>Thm.</strong> <code>f(S,T) = f( {s} , V-{s} ) = val(f)</code></p>
+<p><strong>Prf.</strong> (sketch)</p>
+<p>Order vertices</p>
+<pre><code>s = v.1, v.2, ... v.i, v.(i+1), ..., v.n = t
+    where
+        v.(1..i)   are in S
+        v.(i+1..n) are in T
 
-distance:
-d(u,v) := min ( {∞} ++ { w(p) for u~p~&gt;v })
+val(f) = f({v.1},{v.2, ..., v.n})
+       = f({v.1, v.2},{v.3, ..., v.n}) // since conservation property
+       = ... (induction)
+       = f(S,T)
 </code></pre>
-<p><strong>Find:</strong> <code>d(s,v)</code> for all <code>v in V</code>.</p>
-<p><strong>Use:</strong> Dijkstra&rsquo;s algorithm (requires positive weights) which computes <code>v.dist, v.pred</code>.</p>
-<p><strong>Observation:</strong></p>
-<ul>
-<li>
-<p>If <code>v != s</code> and <code>v.dist &lt; ∞</code>, then for the shortest path <code>p = e.1, e.2, ... e.k</code>, <code>e.k = (v.pred v)</code>.</p>
-</li>
-<li>
-<p>If <code>v = s</code>, then <code>v.dist = 0</code>, <code>v.pred = nil</code>.</p>
-</li>
-<li>
-<p>If <code>v.dist = 0</code>, then <code>v.pred = nil</code>.</p>
-</li>
-</ul>
-<h3 id="dijkstras-algorithm"><a name="user-content-dijkstras-algorithm" href="#dijkstras-algorithm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Dijkstra&rsquo;s Algorithm</h3>
-<pre><code>Dijkstra's-SSSP+(G, s, w) :=                        # Run time:
-    for v in G.V                                    # n
-        v.dist := ∞                                 # | n
-        v.pred := nil                               # | n
-    s.dist := 0                                     # 1
-    H := build a heap with priorities v.dist        # n
-    while H != {}                                   # n
-        u := H.Remove-Min()                         # | lg n
-        for v in { v in G.V | (u,v) in G.E }        # | m
-            if v.dist &gt; u.dist + w(u,v) then        #   | 1
-                v.dist := u.dist + w(u,v)           #   | 1
-                v.pred := u                         #   | 1
-                H.Bubble-Up(v)                      #   | lg n
+<p><strong>Thm.</strong> For any <code>f</code> snf any <code>(S,T)</code>, <code>val(f) ≤ c(S,T)</code>.</p>
+<p><strong>Thm.</strong> <code>max{ val(f) for each possible flow f } = min{ c(S,T) for each possible (S,T) }</code>. The <code>min{ c(S,T) }</code> is the &lsquo;bottleneck&rsquo;.</p>
+<p><strong>Prf.</strong> To seek an algorithm lets consider, for any valid flow f, the <strong>residual graph</strong> <code>G.f</code> which shows us where we have more opportunities for more flow of our commodity. Opportunities are either to &lsquo;back off&rsquo; or &lsquo;racket up&rsquo;.</p>
+<p><code>G.f = (V,E.f)</code> along with (labelling of <code>E.f</code>),</p>
+<pre><code>f : E.f -&gt; Z+
 </code></pre>
-<p><strong>Claim:</strong> When <code>u</code> is chosen from <code>H</code> wiht minimum distance, <code>u.dist = d(s,u)</code>.<br />
-<strong>Proof:</strong> Suppose, for the sake of contradiction, <code>u.dist != d(s,u)</code> for at least some <code>u</code>&lsquo;s. Consider the first time that a vertex <code>u</code> is removed from <code>H</code> where <code>u.dist != d(s,u)</code> (first time that induction hypothesis would break for positive claim). Because this is the first time, there is a shortest path <code>p</code> to <code>u.pred</code>, such that</p>
-<pre><code>w(p) = u.pred.dist = d(s,u.pred)
-</code></pre>
-<p>So we have something like</p>
-<pre><code>s ~~~~p~~~&gt; u.pred ~&gt; u
-|             Λ
-\~~\          |
-p'  \~&gt; u' ~&gt; v'
-</code></pre>
-<p>where <code>p'</code> is a shorter path than <code>p</code> and</p>
-<pre><code>w(p') &lt; w(p) + w(u.pred,u)
-</code></pre>
-<p>Consider vertices along <code>p'</code>, and let <code>(u',v')</code> cross into <code>H</code> (i.e. <code>u' not in H</code>, <code>v' in H</code>, <code>(u',v') in p'</code>) which is possible since <code>u != s ...</code>. Node that, since weights are positive:</p>
-<pre><code>v'.dist ≤ u'.dist       # v' was seen when u' was visited
-+ w(u',v') ≤ w(p')      # maybe there are more edges along p' but path is part of p'
-&lt; w(p) + w(u.pred,u)    # already visited u.pred
-= u'.dist + w(u.pred,u) # already visited u.pred
-= u.dist
-=&gt; v'.dist ≤ u.dist
-=&gt; false! since then we would choose v' over u when Remove-Min
-    def of u is the one that with mim dist that we remove next
-</code></pre>
-<h2 id="bellman-ford-sssp"><a name="user-content-bellman-ford-sssp" href="#bellman-ford-sssp" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Bellman-Ford (SSSP)</h2>
-<p>(Bellman-Ford SSSP : Textbook 24.1)</p>
-<p>Lets allow 0 and negative weight edges:</p>
-<pre><code>w : E -&gt; Z
-</code></pre>
-<p>Consider the case where there is a round from <code>s</code> to <code>v</code> that meanders through a negative weight cycle:</p>
-<pre><code>s –––&gt; p –––&gt; v
-      / \
-     ↓   ↑ (net weight change is negative)
-      \_/
-</code></pre>
-<p>Then <code>d(s,v) = -∞</code>.</p>
-<p><strong>Simple Path:</strong> a path with no loops = no repeated vertices.</p>
-<p><strong>Claim:</strong> Suppose that <code>-∞ &lt; d(s,v) &lt; ∞</code>. Then there&rsquo;s a shortest path that&rsquo;s simple.</p>
-<p><strong>Observation:</strong> A simple path can have at most <code>n-1</code> edges.</p>
-<p><strong>Define:</strong></p>
-<pre><code>D.l(s,v) := min { w(p) | s ~p~&gt; v where |p| ≤ l }
-</code></pre>
-<p><strong>Recurrence:</strong></p>
-<pre><code>D.0(s,v) := {
-    v = s  =&gt; 0
-    v != s =&gt; ∞
-}
-
-D.(k+1)(s,v) := min { D.k(s,v) , min { D.k(s,v) + w(u,v) | (u,v) in E } }
-</code></pre>
-<p><strong>Observation:</strong></p>
-<pre><code>D.1(s,v) := {
-    v = s          =&gt; 0
-    (s,v) in E     =&gt; w(s,v)
-    (s,v) not in E =&gt; ∞
-}
-</code></pre>
-<p><strong>Dynamic Programming (Teaser):</strong> Keep track of all the cases of a function up to the case that you want (in a recursive manner). An example is the linear-time computation of the Fibonacci sequence.</p>
-<h3 id="psuedocode"><a name="user-content-psuedocode" href="#psuedocode" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Psuedocode</h3>
-<pre><code>Belman-Ford(G, s, w) :=
-    for v in G.V                            # for each vertex
-        v.dist := ∞                         # distance is ∞
-        v.pred := nil                       # pred is nil
-    s.dist := 0                             # except the starting vertex, which is 0 distance
-    for |G.V|-1 times
-        for (u,v) in G.E                    # visit each edge
-            new_dist := u.dist + w(u,v)     # calc distance
-            if new_dist &lt; v.dist            # update if shorter than previous shortest
-                v.dist := new_dist
-                v.pred := u
-    for (u,v) in G.E                        # if any edge
-        if u.dist + w(u,v) &lt; v.dist         # has a shorter path than already found,
-            return false                    # then this is an invalid graph (undefined)
-    return true                             # otherwise, valid graph (defiend)
-</code></pre>
-<p><strong>Claim:</strong> <code>forall v, d(s,v) &gt; -∞ -&gt; Belman-Ford(G, s, w) = true</code>. (defined)</p>
-<p><strong>Claim:</strong> <code>exists v, d(s,v) = -∞ -&gt; Belman-Ford(G, s, w) = false</code>. (not defined)</p>
-<h3 id="runtime-analysis"><a name="user-content-runtime-analysis" href="#runtime-analysis" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Runtime Analysis</h3>
-<pre><code>Belman-Ford(G, s, w) :=
-    for v in G.V                            # n
-        v.dist := ∞                         # | 1
-        v.pred := nil                       # | 1
-    s.dist := 0                             # 1
-    for |G.V|-1 times                       # n
-        for (u,v) in G.E                    # | m
-            new_dist := u.dist + w(u,v)     #   | 1
-            if new_dist &lt; v.dist            #   | 1
-                v.dist := new_dist          #   | 1
-                v.pred := u                 #   | 1
-    for (u,v) in G.E                        # m
-        if u.dist + w(u,v) &lt; v.dist         # | 1
-            return false                    # | 1
-    return true                             # 1
-</code></pre>
-<p><strong>Running Time:</strong> <code>Θ(m n)</code> (whereas Dijkstra runs in <code>O( (n+m) lg n)</code>)</p></article></body></html>
+<p>where <code>E.f</code> has two types of edges (i.e <code>E.f = E+.f union E-.f</code>)</p>
+<p><strong>Forw edges</strong>: <code>E+.f := { e in E | f(e) &lt; c(e) }</code>. Let <code>r(e) := c(e) - f(e)</code>. Can &lsquo;ratchet up&rsquo; these edges.<br />
+<strong>Back edges</strong>: <code>E-.f := { (v,u) | (u,v) in E and f(u,v) &gt; 0 }</code>. Let <code>r((v,u)) = f(u,v)</code>. Can &lsquo;back off&rsquo; these edges.</p>
+<p>This suggests an algorithm</p>
+<pre><code>f = _0
+while there is an augmenting p for f:
+    increase f along that path
+return f
+</code></pre></article></body></html>
